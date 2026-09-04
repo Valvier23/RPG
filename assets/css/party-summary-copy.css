@@ -1,0 +1,4 @@
+.stat-points{margin:8px 0 7px;padding:7px 9px;border-left:3px solid #caa75f;background:#211e15;color:#e4cf93;font:600 .66rem 'DM Mono',monospace;letter-spacing:.02em}.xp-hint{display:none!important}
+.party-loading{visibility:hidden}
+.party-ready{visibility:visible;animation:party-reveal .16s ease-out}
+@keyframes party-reveal{from{opacity:0}to{opacity:1}}

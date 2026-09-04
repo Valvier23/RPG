@@ -1,0 +1,60 @@
+/* Retratos del tablero: mismos recursos individuales que la gestión de party. */
+.card-portrait,
+.token .portrait {
+  background-image: var(--portrait-image) !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+
+.p-warrior.gender-male { --portrait-image: url('../../public/portraits/warrior-male.png'); }
+.p-warrior.gender-female { --portrait-image: url('../../public/portraits/warrior-female.png'); }
+.p-archer.gender-male { --portrait-image: url('../../public/portraits/archer-male.png'); }
+.p-archer.gender-female { --portrait-image: url('../../public/portraits/archer-female.png'); }
+.p-mage.gender-male { --portrait-image: url('../../public/portraits/mage-male.png'); }
+.p-mage.gender-female { --portrait-image: url('../../public/portraits/mage-female.png'); }
+.p-assassin.gender-male { --portrait-image: url('../../public/portraits/assassin-male.png'); }
+.p-assassin.gender-female { --portrait-image: url('../../public/portraits/assassin-female.png'); }
+.p-tank.gender-male { --portrait-image: url('../../public/portraits/tank-male.png'); }
+.p-tank.gender-female { --portrait-image: url('../../public/portraits/tank-female.png'); }
+
+/* El retrato queda contenido; el aro se pinta por encima para que no lo corte. */
+.token {
+  overflow: hidden;
+}
+
+.token .portrait {
+  inset: 2px;
+  z-index: 1;
+  border-radius: 50%;
+}
+
+.token::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  border: 2px solid currentColor;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.token.team-ally::after { color: #a6c4a0; }
+.token.team-enemy::after { color: #d28a78; }
+
+.pathfinder-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 8px 0 0;
+  color: #b9b29f;
+  font: .62rem 'DM Mono', monospace;
+}
+
+.pathfinder-scope select {
+  border: 1px solid #5b573f;
+  border-radius: 4px;
+  background: #151611;
+  color: #eee5cb;
+  padding: 5px 23px 5px 7px;
+  font: inherit;
+}

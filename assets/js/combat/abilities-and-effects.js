@@ -97,7 +97,7 @@ nearest=a=>{
 };
 
 /* Capa opcional para visualizar el objetivo fijado por cada unidad. */
-let aggroFocusVisible=false;
+let aggroFocusVisible=false,aggroFocusScope='both';
 
 const focusToggle=document.createElement('button');
 focusToggle.id='focus-toggle';
@@ -105,6 +105,14 @@ focusToggle.className='secondary';
 focusToggle.type='button';
 focusToggle.textContent=UI_TEXT.pathfinder.show;
 $('#status').before(focusToggle);
+const focusScope=document.createElement('label');
+focusScope.className='pathfinder-scope';
+focusScope.innerHTML='Rutas <select aria-label="Equipo cuyas rutas se muestran"><option value="ally">Aliados</option><option value="enemy">Enemigos</option><option value="both" selected>Ambos</option></select>';
+focusToggle.insertAdjacentElement('afterend',focusScope);
+focusScope.querySelector('select').onchange=event=>{
+  aggroFocusScope=event.target.value;
+  renderAggroFocus();
+};
 const previewTarget=actor=>{
   const candidates=alive(actor.team==='ally'?'enemy':'ally');
   return [...candidates].sort((a,b)=>dist(actor,a)-dist(actor,b)||a.id.localeCompare(b.id))[0]||null;
@@ -118,7 +126,7 @@ function renderAggroFocus(){
   svg.setAttribute('viewBox',`0 0 ${arena.clientWidth} ${arena.clientHeight}`);
   const arenaRect=arena.getBoundingClientRect();
   const center=element=>{const r=element.getBoundingClientRect();return{x:r.left+r.width/2-arenaRect.left,y:r.top+r.height/2-arenaRect.top}};
-  alive().filter(actor=>actor.team!=='dummy').forEach(actor=>{
+  alive().filter(actor=>actor.team!=='dummy'&&(aggroFocusScope==='both'||actor.team===aggroFocusScope)).forEach(actor=>{
     const target=running?(units.find(u=>u.id===actor.aggroTargetId&&u.hp>0)||nearest(actor)):previewTarget(actor),from=arena.querySelector(`[data-select="${actor.id}"]`),to=target&&arena.querySelector(`[data-select="${target.id}"]`);
     if(!target||!from||!to)return;
     const route=path(actor,target),destination=route.length?route[route.length-1]:actor.pos,destinationCell=arena.querySelector(`[data-cell="${destination.x},${destination.y}"]`),start=center(from),finish=destinationCell?center(destinationCell):start,targetPoint=center(to),team=actor.team;
@@ -145,7 +153,7 @@ window.addEventListener('resize',()=>requestAnimationFrame(renderAggroFocus));
 $('#grid-zoom').addEventListener('input',()=>requestAnimationFrame(renderAggroFocus));
 
 /* Berserk: guerrero sin armadura, defensa reducida, embestida y daño aumentado. */
-CLASS_FICHAS.warrior.passives.push('Berserk');
+if(!CLASS_FICHAS.warrior.passives.includes('Berserk'))CLASS_FICHAS.warrior.passives.push('Berserk');
 PASSIVE_DESCRIPTIONS.Berserk='Activa: no puede llevar armadura, pierde 9 DEF plana, avanza hasta 2 casillas y, si entra en alcance tras moverse, ataca en el mismo turno. Sus ataques infligen un 50% más de daño.';
 const implementedPassivesBeforeBerserk=implementedPassivesFor;
 implementedPassivesFor=u=>u.cls==='warrior'?[...implementedPassivesBeforeBerserk(u),'Berserk']:implementedPassivesBeforeBerserk(u);
@@ -185,12 +193,12 @@ takeTurn=()=>{
   const distance=dist(a,t),passives=a.selectedPassives||[],hawk=a.cls==='archer'&&passives.includes('Ojo de halcón'),elemental=a.cls==='archer'&&passives.includes('Flecha elemental'),expert=a.cls==='archer'&&passives.includes('Tirador experto'),piercing=a.cls==='archer'&&passives.includes('Disparo perforante')&&!(a.piercingTargets||[]).includes(t.id),rapid=a.cls==='archer'&&passives.includes('Disparo rápido');
   if(piercing)a.piercingTargets=[...(a.piercingTargets||[]),t.id];
   const hits=[];
-  for(let i=0;i<(rapid?2:1)&&t.hp>0;i++){
-    const hit=a.cls==='archer'?archerAutoHit(a,t,rapid):(()=>{const crit=Math.random()<d.crit,raw=Math.round(d.damage*(crit?1.6:1)*(berserk?1.5:1)),physicalHit=damage(a,t,raw);return{physicalHit,fireHit:0,crit,piercing:false,fixation:1,hawk:false,elemental:false,expert:false}})();
+  for(let i=0;i<1&&t.hp>0;i++){
+    const hit=a.cls==='archer'?archerAutoHit(a,t):(()=>{const crit=Math.random()<d.crit,raw=Math.round(d.damage*(crit?1.6:1)*(berserk?1.5:1)),physicalHit=damage(a,t,raw);return{physicalHit,fireHit:0,crit,piercing:false,fixation:1,hawk:false,elemental:false,expert:false}})();
     hits.push(hit);render();effect(a,t,hit.physicalHit+hit.fireHit);
   }
   chargeAttack(a);
-  const total=hits.reduce((sum,hit)=>sum+hit.physicalHit+hit.fireHit,0),last=hits[hits.length-1],kind=berserk?'enhanced':rapid?'enhanced':last.piercing?'skill':last.crit?'critical':'attack',detail=berserk?`Berserk · ${total} de daño (+50%)`:rapid?`Disparo rápido · 2 impactos · ${total} de daño`:last.piercing?'Disparo perforante · primer impacto ×3,5':`${total} de daño`;
+  const total=hits.reduce((sum,hit)=>sum+hit.physicalHit+hit.fireHit,0),last=hits[hits.length-1],kind=berserk?'enhanced':rapid?'enhanced':last.piercing?'skill':last.crit?'critical':'attack',detail=berserk?`Berserk · ${total} de daño (+50%)`:rapid?`Disparo rápido · velocidad de ataque ×2 · ${total} de daño`:last.piercing?'Disparo perforante · primer impacto ×3,5':`${total} de daño`;
   showCombatAction(kind,a,t,detail);logCombatAction(kind,`${berserk?'⚔ ':''}${a.name} ataca a ${t.name}: ${total} de daño${berserk?' · Berserk +50%':''}.`);
   if(!alive(t.team).length)end();
   requestAnimationFrame(renderAggroFocus);

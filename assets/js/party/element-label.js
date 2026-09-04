@@ -1,0 +1,1 @@
+(()=>{const update=()=>document.querySelectorAll('.elemental-weapon label').forEach(label=>{if(label.textContent!=='Elemento')label.textContent='Elemento'});new MutationObserver(update).observe(document.querySelector('#party-app'),{childList:true,subtree:true});update()})();

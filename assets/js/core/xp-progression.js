@@ -1,0 +1,9 @@
+/* Progresión compartida: cada victoria concede 100 PX. */
+const MAX_LEVEL=20;
+const XP_PER_VICTORY=100;
+function xpForNextLevel(level){return level>=MAX_LEVEL?0:Math.round(XP_PER_VICTORY*Math.pow(Math.max(1,level),1.6))}
+function normalizeProgress(member){member.level=Math.min(MAX_LEVEL,Math.max(1,Number(member.level)||1));member.xp=Math.max(0,Number(member.xp)||0);if(member.level>=MAX_LEVEL)member.xp=0;return member}
+function xpProgress(member){normalizeProgress(member);const needed=xpForNextLevel(member.level);return{xp:member.xp,needed,pct:needed?Math.min(100,member.xp/needed*100):100}}
+function grantVictoryXp(member,amount=XP_PER_VICTORY){normalizeProgress(member);if(member.level>=MAX_LEVEL)return{levels:0,...xpProgress(member)};member.xp+=amount;let levels=0;while(member.level<MAX_LEVEL&&member.xp>=xpForNextLevel(member.level)){member.xp-=xpForNextLevel(member.level);member.level++;levels++}if(member.level>=MAX_LEVEL)member.xp=0;return{levels,...xpProgress(member)}}
+function persistRosterProgress(){try{const saved=JSON.parse(localStorage.getItem('squad-tactics-party-v1'));if(!Array.isArray(saved))return;const byId=new Map(roster.filter(unit=>unit.team==='ally').map(unit=>[unit.id.replace(/^party-/,''),unit]));saved.forEach(member=>{const unit=byId.get(String(member.id));if(unit){member.level=unit.level;member.xp=unit.xp||0}});localStorage.setItem('squad-tactics-party-v1',JSON.stringify(saved))}catch{}}
+function awardVictoryXp(){const allies=roster.filter(unit=>unit.team==='ally');if(!allies.length)return;const results=allies.map(unit=>({name:unit.name,...grantVictoryXp(unit)}));persistRosterProgress();const levelUps=results.filter(result=>result.levels);log(`+${XP_PER_VICTORY} PX para la party.${levelUps.length?` Sube de nivel: ${levelUps.map(result=>`${result.name} (+${result.levels})`).join(', ')}.`:''}`)}
