@@ -1,7 +1,7 @@
 /* Adaptación del motor actual al sistema común de paquetes de daño. */
 mageElement = unit => DAMAGE_PROFILE.selectedElement(unit, 'mage');
 
-archerAutoHit = (attacker, target) => {
+archerAutoHit = (attacker, target, halfDamage = false) => {
   const values = derived(attacker);
   const passives = attacker.selectedPassives || [];
   const distance = dist(attacker, target);
@@ -13,7 +13,7 @@ archerAutoHit = (attacker, target) => {
   const fixation = fixationMultiplier(attacker, target);
   const expertBonus = expert ? distance * .10 : 0;
   const crit = Math.random() < values.crit + expertBonus;
-  const raw = Math.round(values.damage * (crit ? 1.6 : 1) * (piercing ? 3.5 : 1) * fixation);
+  const raw = Math.round(values.damage * (crit ? 1.6 : 1) * (halfDamage ? .5 : 1) * (piercing ? 3.5 : 1) * fixation);
   const applied = DAMAGE_PROFILE.packets(attacker, raw).map(packet => ({
     ...packet,
     dealt: packet.type === 'physical'

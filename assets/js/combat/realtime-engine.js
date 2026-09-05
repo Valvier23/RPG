@@ -4,7 +4,7 @@ let realtimeLastFrame=0,realtimeStatsFrame=0,realtimeElapsed=0;
 STAT_NAMES.agility=GAME_CONTENT.realtimeStatNames.agility;
 const derivedBeforeRealtime=derived;
 derived=u=>{const values=derivedBeforeRealtime(u),rapid=u.cls==='archer'&&(u.selectedPassives||[]).includes('Disparo rápido'),attackSpeed=Math.max(.30,.32+(u.stats.agility||0)*.04)*(rapid?2:1);return{...values,attackSpeed:Math.round(attackSpeed*100)/100}};
-PASSIVE_DESCRIPTIONS['Disparo rápido']='Activa: duplica la velocidad de ataque.';
+PASSIVE_DESCRIPTIONS['Disparo rápido']='Activa: duplica la velocidad de ataque, pero cada ataque básico inflige el 50% del daño. Por sí sola mantiene el mismo daño por segundo.';
 
 
 function realtimeManaMarkup(u){const mana=Math.max(0,Math.min(100,u.mana||0));return `<div class="mana-card" data-mana-card="${u.id}"><span>MANÁ</span><i class="mana-track"><b class="mana-fill" style="width:${mana}%"></b></i><b>${Math.round(mana)}%</b></div>`}
@@ -30,10 +30,10 @@ function realtimeAttack(a,t){
   if(!t||t.hp<=0)return false;
   const d=derived(a),rapid=a.cls==='archer'&&(a.selectedPassives||[]).includes('Disparo rápido'),berserk=a.cls==='warrior'&&(a.selectedPassives||[]).includes('Berserk'),hits=[];
   combatDamageSource='basic';activeCombatTurn={actorId:a.id,attacked:false,usedAbility:false};
-  if(a.cls==='archer'&&typeof archerAutoHit==='function')hits.push(archerAutoHit(a,t));
+  if(a.cls==='archer'&&typeof archerAutoHit==='function')hits.push(archerAutoHit(a,t,rapid));
   else{const crit=Math.random()<d.crit,raw=Math.round(d.damage*(crit?1.6:1)*(berserk?1.5:1)),physicalHit=damage(a,t,raw);hits.push({physicalHit,fireHit:0,crit})}
   const total=hits.reduce((sum,hit)=>sum+(hit.physicalHit||0)+(hit.fireHit||0),0),critical=hits.some(hit=>hit.crit);
-  realtimeActionStats(a,'attack');a.attackReadyIn=1/d.attackSpeed;showCombatAction(critical?'critical':berserk||rapid?'enhanced':'attack',a,t,rapid?`Disparo rápido · velocidad de ataque ×2 · ${total} de daño`:`${total} de daño`);render();effect(a,t,total);logCombatAction(critical?'critical':'attack',`${a.name} ataca a ${t.name}: ${total} de daño${critical?' crítico':''}${berserk?' · Berserk +50%':''}${rapid?' · Disparo rápido ×2 velocidad de ataque':''}.`);activeCombatTurn=null;
+  realtimeActionStats(a,'attack');a.attackReadyIn=1/d.attackSpeed;showCombatAction(critical?'critical':berserk||rapid?'enhanced':'attack',a,t,rapid?`Disparo rápido · velocidad ×2 · 50% de daño · ${total} de daño`:`${total} de daño`);render();effect(a,t,total);logCombatAction(critical?'critical':'attack',`${a.name} ataca a ${t.name}: ${total} de daño${critical?' crítico':''}${berserk?' · Berserk +50%':''}${rapid?' · Disparo rápido: velocidad ×2, daño 50%':''}.`);activeCombatTurn=null;
   if(a.cls==='mage')units.forEach(u=>{if(u.electricMageId===a.id)delete u.electricMageId});
   return true;
 }

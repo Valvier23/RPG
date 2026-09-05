@@ -43,7 +43,8 @@
       const profile = document.createElement('div');
       profile.className = 'damage-profile';
       profile.innerHTML = `<div><b>Perfil ofensivo</b><small>${DAMAGE_PROFILE.summary(member)}</small></div>`;
-      loadout.insertAdjacentElement('afterend', profile);
+      const summary = document.querySelector('.summary');
+      (summary || loadout).insertAdjacentElement('afterend', profile);
     }
 
     Object.entries(PASSIVE_ELEMENTS).forEach(([passive, config]) => {
